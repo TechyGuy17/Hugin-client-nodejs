@@ -4,6 +4,7 @@ const nacl = require('tweetnacl')
 const naclUtil = require('tweetnacl-util')
 const prompt = require('prompt-sync')();
 var cron = require('node-cron');
+require('dotenv').config();
 
 function toHex(str,hex) {
     try {
@@ -35,8 +36,8 @@ function hexToUint(hexString) {
 }
 
 async function sendGroupsMessage(message, nickname, group) {    
-    const my_address = "SET YOUR ADDRESS"
-    const private_key = 'SET THE PRIVATE KEY FOR ADDRESS' 
+    const my_address = process.env.ADDRESS
+    const private_key = process.env.PRIVKEY
     const signature = await cnUtil.signMessage(message, private_key)
     const timestamp = parseInt(Date.now())
     const nonce = nonceFromTimestamp(timestamp)
@@ -55,7 +56,7 @@ async function sendGroupsMessage(message, nickname, group) {
     const payload_encrypted = {"sb":Buffer.from(secretbox).toString('hex'), "t":timestamp}
     const payload_encrypted_hex = toHex(JSON.stringify(payload_encrypted))
     
-    return await fetch(`CHOOSE.AN.API/api/v1/posts`, {
+    return await fetch(process.env.POSTSURL, {
     method: 'POST', // or 'PUT'
     headers: {
         'Content-Type': 'application/json',
@@ -65,11 +66,16 @@ async function sendGroupsMessage(message, nickname, group) {
     return response.json()
 }).then((json) => {
     // console.log(json)
+    if(json.success == true) {
+        console.log("The message was successfully sent!")
+    } else {
+        console.log("There was an error in sending the message!: " + json.error)
+    }
 })
 }
 
 async function getGroupPosts(possibleKey) {
-    fetch('CHOOSE.AN.API/api/v1/posts-encrypted-group?size=3')
+    fetch(process.env.GETURL)
     .then((response) => {
         return response.json()
     })
